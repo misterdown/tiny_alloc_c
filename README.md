@@ -92,6 +92,7 @@ int main() {
     stbi_uc* data = stbi_load("F:/projects/tiny_malloc/image.jpg", &x,& y, &c, 3);
     assert(data != 0);
     stbi_image_free(data);
+    printf("%s", "success");
     return 0;
 }
 }
