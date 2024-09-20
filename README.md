@@ -95,7 +95,6 @@ int main() {
     printf("%s", "success");
     return 0;
 }
-}
 ```
 
 ## License
