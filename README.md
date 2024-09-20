@@ -1,6 +1,5 @@
 # tiny_alloc_c
 Very simple memory malloc implementation in pure C.
-Вот тебе кусок текста на русском.
 
 - [Usage](#usage)
 - [Features](#features)
@@ -8,7 +7,7 @@ Very simple memory malloc implementation in pure C.
 - [License](#license)
 
 # Usage
-useless, but funny
+Useless, but funny
 
 # Features
  - `talloc` - allocating memory
