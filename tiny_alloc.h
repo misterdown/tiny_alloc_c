@@ -23,7 +23,8 @@
 */
 #ifndef TINY_ALLOC_H_
 #include <stdint.h>
-/** @brief  A function that allocates an amount of memory equal to `count`. Returns `0` if the function fails for some reason.
+/** 
+ * @brief   A function that allocates an amount of memory equal to `count`. Returns `0` if the function fails for some reason.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          By default, this value is `1024 * 1024 * 4`, which is 4 megabytes (mebibytes).
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
@@ -32,7 +33,8 @@
  */
  void* talloc(size_t count);
 
-/** @brief  Reallocates memory for `pointer` with a size of `count`.
+/** 
+ * @brief   Reallocates memory for `pointer` with a size of `count`.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
  * @param pointer pointer to reallocate.

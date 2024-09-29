@@ -47,7 +47,8 @@
 #   define TALLOC_DEF extern
 #endif
 
-/** @brief  A function that allocates an amount of memory equal to `count`. Returns `0` if the function fails for some reason.
+/** 
+ * @brief  A function that allocates an amount of memory equal to `count`. Returns `0` if the function fails for some reason.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          By default, this value is `1024 * 1024 * 4`, which is 4 megabytes (mebibytes).
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
@@ -56,7 +57,8 @@
  */
 TALLOC_DEF void* talloc(TALLOC_SIZE_TYPE count);
 
-/** @brief  Reallocates memory for `pointer` with a size of `count`.
+/** 
+ * @brief  Reallocates memory for `pointer` with a size of `count`.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
  * @param pointer pointer to reallocate.
@@ -306,16 +308,22 @@ TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count) {
                 }
                 current->count = count;
                 return current->pointer;
-            } else if (current->count < count) {
+            } else if (current->count < count) { // allocate new chunk and copy data to it
                 heap_chunk* next = current->next;
-                if (next == 0) {
+                if ((next == 0) || (!next->isFree)) {
+                    void* newPointer = talloc(count);
+                    for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) // copy data
+                        ((char*)newPointer)[i] = ((char*)current->pointer)[i];
                     talloc__free_chunk(current);
-                    return talloc(count);
+                    return newPointer;
                 } else if (next->isFree) {
                     TALLOC_SIZE_TYPE delta = count - current->count;
                     if (next->count < delta) {
+                        void* newPointer = talloc(count);
+                        for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) // copy data
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i];
                         talloc__free_chunk(current);
-                        return talloc(count);
+                        return newPointer;
                     } else if (next->count > delta){ 
                         current->count += delta;
                         next->count -= delta;
@@ -329,9 +337,6 @@ TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count) {
                         talloc__return_chunk(next);
                         return current->pointer;
                     }
-                } else {
-                    talloc__free_chunk(current);
-                    return talloc(count);
                 }
             } else { // equal
                 return current->pointer;

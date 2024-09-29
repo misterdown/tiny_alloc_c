@@ -42,7 +42,6 @@ typedef struct heap_info_t {
 
 typedef char chunk_state;
 
-
 typedef struct heap_chunk_t {
     void* pointer;
     size_t count;
@@ -252,16 +251,22 @@ void* trealloc(void* pointer, size_t count) {
                 }
                 current->count = count;
                 return current->pointer;
-            } else if (current->count < count) {
+            } else if (current->count < count) { // allocate new chunk and copy data to it
                 heap_chunk* next = current->next;
-                if (next == 0) {
+                if ((next == 0) || (!next->isFree)) {
+                    void* newPointer = talloc(count);
+                    for (size_t i = 0; i < current->count; ++i) // copy data
+                        ((char*)newPointer)[i] = ((char*)current->pointer)[i];
                     talloc__free_chunk(current);
-                    return talloc(count);
+                    return newPointer;
                 } else if (next->isFree) {
                     size_t delta = count - current->count;
                     if (next->count < delta) {
+                        void* newPointer = talloc(count);
+                        for (size_t i = 0; i < current->count; ++i) // copy data
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i];
                         talloc__free_chunk(current);
-                        return talloc(count);
+                        return newPointer;
                     } else if (next->count > delta){ 
                         current->count += delta;
                         next->count -= delta;
@@ -275,9 +280,6 @@ void* trealloc(void* pointer, size_t count) {
                         talloc__return_chunk(next);
                         return current->pointer;
                     }
-                } else {
-                    talloc__free_chunk(current);
-                    return talloc(count);
                 }
             } else { // equal
                 return current->pointer;
