@@ -28,9 +28,11 @@ By default, this value is `1024 * 1024 * 4`, which is 4 megabytes (mebibytes).
 
 If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
 
+If `copyOld` is equal to zero, then the memory from `pointer` will not be copied and cleared.
+
 ## trealloc
 ```C
-void* trealloc(void* pointer, size_t count);
+void* trealloc(void* pointer, size_t count, const int copyOld);
 ```
 
 Reallocates memory for `pointer` with a size of `count`.
