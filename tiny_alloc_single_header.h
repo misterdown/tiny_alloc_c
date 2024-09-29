@@ -58,14 +58,16 @@
 TALLOC_DEF void* talloc(TALLOC_SIZE_TYPE count);
 
 /** 
- * @brief  Reallocates memory for `pointer` with a size of `count`.
+ * @brief   Reallocates memory for `pointer` with a size of `count`.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
+ *          Copy old data to new pointer.
  * @param pointer pointer to reallocate.
  * @param count count of bytes to allocate.
+ * @param copyOld copy and clear old data or not.
  * @return Valid or zero pointer.
  */ 
-TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count);
+TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count, const int copyOld);
 
 /// @brief Deallocates the memory allocated for `pointer`. If for some reason the function cannot free the memory for this pointer, it does nothing. @param pointer pointer to free.
 TALLOC_DEF void tfree(void* pointer);
@@ -272,7 +274,7 @@ TALLOC_DEF void tfree(void* pointer) {
         current = current->next;
     }
 }
-TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count) {
+void* trealloc(void* pointer, TALLOC_SIZE_TYPE count, const int copyOld) {
     if ((tallocChunksCount > TALLOC_MAX_HEAP_CHUNKS) || (count == 0)) {
         tfree(pointer);
         return 0;
@@ -308,20 +310,29 @@ TALLOC_DEF void* trealloc(void* pointer, TALLOC_SIZE_TYPE count) {
                 }
                 current->count = count;
                 return current->pointer;
-            } else if (current->count < count) { // allocate new chunk and copy data to it
+            } else if (current->count < count) { 
                 heap_chunk* next = current->next;
-                if ((next == 0) || (!next->isFree)) {
-                    void* newPointer = talloc(count);
-                    for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) // copy data
-                        ((char*)newPointer)[i] = ((char*)current->pointer)[i];
-                    talloc__free_chunk(current);
-                    return newPointer;
+                if ((next == 0) || (!next->isFree)) { // allocate new chunk and copy data to new allocated + clear old data
+                    if (copyOld == 0) {
+                        talloc__free_chunk(current);
+                        return talloc(count);
+                    } else {
+                        void* newPointer = talloc(count);
+                        for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) {
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i]; // copy data
+                            ((char*)current->pointer)[i] = 0; // clear
+                        }
+                        talloc__free_chunk(current);
+                        return newPointer;
+                    }
                 } else if (next->isFree) {
                     TALLOC_SIZE_TYPE delta = count - current->count;
                     if (next->count < delta) {
                         void* newPointer = talloc(count);
-                        for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) // copy data
-                            ((char*)newPointer)[i] = ((char*)current->pointer)[i];
+                        for (TALLOC_SIZE_TYPE i = 0; i < current->count; ++i) {
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i]; // copy data
+                            ((char*)current->pointer)[i] = 0; // clear
+                        }
                         talloc__free_chunk(current);
                         return newPointer;
                     } else if (next->count > delta){ 

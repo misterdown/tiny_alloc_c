@@ -37,11 +37,13 @@
  * @brief   Reallocates memory for `pointer` with a size of `count`.
  *          If the function returns `0`, it is usually due to the virtual heap size being too small. You can change its size by modifying `TALLOC_MAX_HEAP_SIZE`.
  *          If this is the first call to this function, it initializes the heap, and an assert is triggered in case of failure.
+ *          Copy old data to new pointer.
  * @param pointer pointer to reallocate.
  * @param count count of bytes to allocate.
+ * @param copyOld copy and clear old data or not.
  * @return Valid or zero pointer.
  */ 
-void* trealloc(void* pointer, size_t count);
+void* trealloc(void* pointer, size_t count, const int copyOld);
 
 /// @brief Deallocates the memory allocated for `pointer`. If for some reason the function cannot free the memory for this pointer, it does nothing. @param pointer pointer to free.
 void tfree(void* pointer);

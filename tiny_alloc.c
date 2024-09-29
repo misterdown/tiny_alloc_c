@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <assert.h>
-#define TALLOC_MAX_HEAP_SIZE (1024*1024*8) // 4 mebibyte
+#define TALLOC_MAX_HEAP_SIZE (1024*1024*4) // 4 mebibyte
 #define TALLOC_MAX_HEAP_CHUNKS 4096
 #define TALLOC_USE_STATIC 0
 
@@ -215,7 +215,7 @@ void tfree(void* pointer) {
         current = current->next;
     }
 }
-void* trealloc(void* pointer, size_t count) {
+void* trealloc(void* pointer, size_t count, const int copyOld) {
     if ((tallocChunksCount > TALLOC_MAX_HEAP_CHUNKS) || (count == 0)) {
         tfree(pointer);
         return 0;
@@ -251,20 +251,29 @@ void* trealloc(void* pointer, size_t count) {
                 }
                 current->count = count;
                 return current->pointer;
-            } else if (current->count < count) { // allocate new chunk and copy data to it
+            } else if (current->count < count) { 
                 heap_chunk* next = current->next;
-                if ((next == 0) || (!next->isFree)) {
-                    void* newPointer = talloc(count);
-                    for (size_t i = 0; i < current->count; ++i) // copy data
-                        ((char*)newPointer)[i] = ((char*)current->pointer)[i];
-                    talloc__free_chunk(current);
-                    return newPointer;
+                if ((next == 0) || (!next->isFree)) { // allocate new chunk and copy data to new allocated + clear old data
+                    if (copyOld == 0) {
+                        talloc__free_chunk(current);
+                        return talloc(count);
+                    } else {
+                        void* newPointer = talloc(count);
+                        for (size_t i = 0; i < current->count; ++i) {
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i]; // copy data
+                            ((char*)current->pointer)[i] = 0; // clear
+                        }
+                        talloc__free_chunk(current);
+                        return newPointer;
+                    }
                 } else if (next->isFree) {
                     size_t delta = count - current->count;
                     if (next->count < delta) {
                         void* newPointer = talloc(count);
-                        for (size_t i = 0; i < current->count; ++i) // copy data
-                            ((char*)newPointer)[i] = ((char*)current->pointer)[i];
+                        for (size_t i = 0; i < current->count; ++i) {
+                            ((char*)newPointer)[i] = ((char*)current->pointer)[i]; // copy data
+                            ((char*)current->pointer)[i] = 0; // clear
+                        }
                         talloc__free_chunk(current);
                         return newPointer;
                     } else if (next->count > delta){ 
