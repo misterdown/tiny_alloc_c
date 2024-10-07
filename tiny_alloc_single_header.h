@@ -28,7 +28,7 @@
 #   define TALLOC_ASSERT(expr__) assert(expr__)
 #endif
 #ifndef TALLOC_SIZE_TYPE
-#   include <stdint.h>
+#   include <stddef.h>
 #   define TALLOC_SIZE_TYPE size_t
 #endif
 #ifndef TALLOC_BOOL
