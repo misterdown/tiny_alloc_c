@@ -24,6 +24,7 @@
 
 #include "tiny_alloc.h"
 #include <stdio.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <assert.h>
